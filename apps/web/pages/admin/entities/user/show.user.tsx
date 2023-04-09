@@ -9,6 +9,7 @@ export function ShowUser(_props: any) {
     <Show>
       <SimpleShowLayout>
         <NumberField source="id" />
+        <NumberField source="salary" />
       </SimpleShowLayout>
     </Show>
   )

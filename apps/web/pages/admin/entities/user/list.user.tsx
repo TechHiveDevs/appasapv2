@@ -16,6 +16,7 @@ export function ListUser(props: any) {
     <List {...props} filters={filters} actions={<ListActions />}>
       <DatagridConfigurable rowClick="show">
         <NumberField source="id" />
+        <NumberField source="salary" />
         <RowActions>
           <EditButton />
           <DeleteButton />

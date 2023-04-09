@@ -9,4 +9,5 @@ generator client {
 
 model User{
   id Int @id
+  salary Float?
 }

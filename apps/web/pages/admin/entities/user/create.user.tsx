@@ -10,6 +10,7 @@ export function CreateUser(_props: any) {
     <Create>
       <SimpleForm>
         <NumberInput source="id" variant="outlined" validate={[required()]} />
+        <NumberInput source="salary" variant="outlined" />
       </SimpleForm>
     </Create>
   )

@@ -10,6 +10,7 @@ export function EditUser(_props: any) {
     <Edit>
       <SimpleForm>
         <NumberInput source="id" variant="outlined" validate={[required()]} />
+        <NumberInput source="salary" variant="outlined" />
       </SimpleForm>
     </Edit>
   )
