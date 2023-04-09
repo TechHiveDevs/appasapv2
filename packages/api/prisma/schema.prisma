@@ -1,12 +1,329 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
+model User {
+  id         Int      @id @default(autoincrement())
+  first_name String
+  last_name  String
+  email      String   @unique
+  phone      String?
+  avatar     String
+  birthDate  DateTime
+  role       UserRole
+  language   String   @default("en")
+  currency   String   @default("usd")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  Customer Customer?
+  Supplier Supplier?
 }
 
-model wtf{
-  id Int @id
+enum UserRole {
+  Customer
+  Supplier
+}
+
+enum ServiceType {
+  Clinical
+  Travel
+  Accommodation
+}
+
+model Customer {
+  id                 Int       @id
+  user               User      @relation(references: [id], fields: [userId])
+  userId             Int       @unique
+  bookings           Booking[]
+  medicalInformation Json
+}
+
+model Supplier {
+  id Int @id @default(autoincrement())
+
+  user                        User                       @relation(references: [id], fields: [userId])
+  userId                      Int                        @unique
+  serviceOffers               ServiceOffer[]
+  //
+  supplierAdditionalCharges   SupplierAdditionalCharge[] @relation("SupplierAdditionalCharges")
+  supplierDiscounts           SupplierDiscount[]         @relation("SupplierDiscounts")
+  supplierExclusions          SupplierExclusion[]        @relation("SupplierExclusions")
+  //
+  subSuppliers                Supplier[]                 @relation("subSupplierParent")
+  parent                      Supplier?                  @relation("subSupplierParent", fields: [parentId], references: [id])
+  parentId                    Int?
+  supplierType                SupplierType
+  //
+  serviceTypes                ServiceType[]
+  authServices                ServiceType[]
+  //auth service option ids
+  companyRegistrationCode     String
+  companyRegisterationCountry String
+  isDisabled                  Boolean
+  createdAt                   DateTime                   @default(now())
+  updatedAt                   DateTime                   @updatedAt
+}
+
+enum SupplierType {
+  EviCareSubSupplier
+  InternalSubSupplier
+  ParentSupplier
+}
+
+model ServiceOffer {
+  id                Int                @id @default(autoincrement())
+  name              String
+  serviceType       ServiceType
+  Supplier          Supplier           @relation(fields: [supplierId], references: [id])
+  supplierId        Int
+  //
+  clinicalOffer     ClinicalOffer?     @relation("ClinicalServiceOffers")
+  travelOffer       TravelOffer?       @relation("TravelServiceOffers")
+  accomodationOffer AccomodationOffer? @relation("AccomodationServiceOffers")
+
+  //
+  supplierAdditionalCharges SupplierAdditionalCharge[]  @relation("ServiceOfferAdditionalCharges")
+  supplierDiscounts         SupplierDiscount[]          @relation("ServiceOfferSupplierDiscounts")
+  supplierExclusions        SupplierExclusion[]         @relation("ServiceOfferSupplierExclusions")
+  //
+  items                     BookingItem[]
+  //
+  supplierServiceOfferPrice SupplierServiceOfferPrice[]
+}
+
+model SupplierServiceOfferPrice {
+  id             Int          @id @default(autoincrement())
+  price          Float
+  currency       String
+  ServiceOffer   ServiceOffer @relation(fields: [serviceOfferId], references: [id])
+  serviceOfferId Int
+}
+
+model ClinicalOffer {
+  id                          Int                    @id @default(autoincrement())
+  serviceOfferId              Int                    @unique
+  serviceOffer                ServiceOffer           @relation("ClinicalServiceOffers", fields: [serviceOfferId], references: [id])
+  ClinicalServiceOption       ClinicalServiceOption?
+  location                    Json
+  appointmentDate             DateTime
+  isPrivateRoomAvailable      Boolean
+  // DietaryOptions         DietaryOptions[]
+  dietary                     Dietary[]
+  isChaperoneAvailable        Boolean
+  requirePreconsultation      Boolean
+  offerTelehealthConsultation Boolean
+  isDisabled                  Boolean
+  createdAt                   DateTime               @default(now())
+  updatedAt                   DateTime               @updatedAt
+}
+
+// model DietaryOptions {
+//   id              Int           @id @default(autoincrement())
+//   clinicalOffer   ClinicalOffer @relation(fields: [clinicalOfferId], references: [id])
+//   dietary         Dietary
+//   clinicalOfferId Int
+// }
+
+enum Dietary {
+  Veagan
+  Halal
+  GlutenFree
+  Vegetarian
+  Kosher
+}
+
+model ClinicalServiceOption {
+  id                Int           @id @default(autoincrement())
+  name              String
+  description       String?
+  clinicalOffer     ClinicalOffer @relation(fields: [clinicalOfferId], references: [id])
+  clinicalOfferId   Int           @unique
+  clinicalType      String
+  clinicalSubType   String
+  snomedCode        String
+  snomedDescription String
+  keywords          String[]
+}
+
+model TravelOffer {
+  id                  Int                  @id @default(autoincrement())
+  serviceOfferId      Int                  @unique
+  serviceOffer        ServiceOffer         @relation("TravelServiceOffers", fields: [serviceOfferId], references: [id])
+  TravelServiceOption TravelServiceOption?
+  // add other fields for travel offers
+  locationFrom        Json
+  locationTo          Json
+  dietary             Dietary[]
+  departureDate       DateTime
+
+  returnDate DateTime
+  isDisabled Boolean
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model TravelServiceOption {
+  id            Int         @id @default(autoincrement())
+  name          String
+  description   String?
+  travelOffer   TravelOffer @relation(fields: [travelOfferId], references: [id])
+  travelOfferId Int         @unique
+  travelMethod  String
+  travelClass   String
+}
+
+model AccomodationOffer {
+  id                        Int                        @id @default(autoincrement())
+  serviceOfferId            Int                        @unique
+  serviceOffer              ServiceOffer               @relation("AccomodationServiceOffers", fields: [serviceOfferId], references: [id])
+  AccomodationServiceOption AccomodationServiceOption?
+  numberOfRooms             Int
+  checkInDate               DateTime
+  checkOutDate              DateTime
+  isDisabled                Boolean
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+}
+
+model AccomodationServiceOption {
+  id                   Int               @id @default(autoincrement())
+  name                 String
+  description          String?
+  accomodationOffer    AccomodationOffer @relation(fields: [accomodationOfferId], references: [id])
+  accomodationOfferId  Int               @unique
+  accomodationType     String
+  accomodationClass    String
+  accomodationCapacity String
+}
+
+model SupplierAdditionalCharge {
+  id                 Int                      @id @default(autoincrement())
+  name               String
+  value              Float
+  options            AdditionalChargeOption[] @relation("AdditionalChargeOptions")
+  supplier           Supplier                 @relation("SupplierAdditionalCharges", fields: [supplierId], references: [id])
+  supplierId         Int
+  serviceOffers      ServiceOffer             @relation("ServiceOfferAdditionalCharges", fields: [serviceOfferId], references: [id])
+  serviceOfferId     Int
+  chargeValue        Float
+  chargePercentValue Float
+  currency           String
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+}
+
+model AdditionalChargeOption {
+  id                         Int                      @id @default(autoincrement())
+  name                       String
+  value                      Float
+  supplieradditionalCharge   SupplierAdditionalCharge @relation("AdditionalChargeOptions", fields: [supplieradditionalChargeId], references: [id])
+  supplieradditionalChargeId Int
+  serviceType                ServiceType
+  condition                  Json
+}
+
+model SupplierDiscount {
+  id                   Int              @id @default(autoincrement())
+  name                 String
+  value                Float
+  options              DiscountOption[] @relation("DiscountOptions")
+  supplier             Supplier         @relation("SupplierDiscounts", fields: [supplierId], references: [id])
+  supplierId           Int
+  serviceOffers        ServiceOffer     @relation("ServiceOfferSupplierDiscounts", fields: [serviceOfferId], references: [id])
+  serviceOfferId       Int
+  //
+  discountOptionValue  Float
+  discountPercentValue Float
+  currency             String
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+}
+
+model DiscountOption {
+  id                 Int              @id @default(autoincrement())
+  name               String
+  value              Float
+  supplierDiscount   SupplierDiscount @relation("DiscountOptions", fields: [supplierDiscountId], references: [id])
+  supplierDiscountId Int
+  serviceType        ServiceType
+  condition          Json
+}
+
+model SupplierExclusion {
+  id             Int               @id @default(autoincrement())
+  name           String
+  options        ExclusionOption[] @relation("ExclusionOptions")
+  supplier       Supplier          @relation("SupplierExclusions", fields: [supplierId], references: [id])
+  supplierId     Int
+  serviceOffers  ServiceOffer      @relation("ServiceOfferSupplierExclusions", fields: [serviceOfferId], references: [id])
+  serviceOfferId Int
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+}
+
+model ExclusionOption {
+  id                  Int               @id @default(autoincrement())
+  name                String
+  supplierExclusion   SupplierExclusion @relation("ExclusionOptions", fields: [supplierExclusionId], references: [id])
+  supplierExclusionId Int
+  serviceType         ServiceType
+  condition           Json
+}
+
+model Booking {
+  id            Int           @id @default(autoincrement())
+  date          DateTime
+  totalAmount   Float
+  bookingItems  BookingItem[]
+  Customer      Customer?     @relation(fields: [customerId], references: [id])
+  customerId    Int?
+  bookingStatus BookingStatus
+  price         Float
+  currency      String
+}
+
+enum BookingStatus {
+  Unpaid
+  Upcoming
+  Complete
+}
+
+model BookingItem {
+  id                Int                           @id @default(autoincrement())
+  bookingId         Int
+  booking           Booking                       @relation(fields: [bookingId], references: [id])
+  additionalCharges BookingItemAdditionalCharge[]
+  discounts         BookingItemDiscount[]
+  supplier          String?
+  serviceOffer      ServiceOffer?                 @relation(fields: [serviceOfferId], references: [id])
+  serviceOfferId    Int?
+  price             Float
+  currency          String
+  serviceType       ServiceType
+}
+
+model BookingItemAdditionalCharge {
+  id            Int         @id @default(autoincrement())
+  bookingItemId Int
+  bookingItem   BookingItem @relation(fields: [bookingItemId], references: [id])
+  description   String?
+
+  price    Float
+  currency String
+}
+
+model BookingItemDiscount {
+  id            Int         @id @default(autoincrement())
+  bookingItemId Int
+  bookingItem   BookingItem @relation(fields: [bookingItemId], references: [id])
+  description   String?
+
+  price    Float
+  currency String
 }
