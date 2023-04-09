@@ -4,12 +4,11 @@ import {
   SimpleShowLayout,
 } from 'react-admin'
 
-export function ShowUser(_props: any) {
+export function ShowWtf(_props: any) {
   return (
     <Show>
       <SimpleShowLayout>
         <NumberField source="id" />
-        <NumberField source="salary" />
       </SimpleShowLayout>
     </Show>
   )

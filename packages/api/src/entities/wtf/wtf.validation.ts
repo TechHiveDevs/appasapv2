@@ -5,12 +5,11 @@ import { genericValidation } from "../../helpers/generic-crud/generic-crud.valid
 
 const fields = [
   'id',
-  'salary',
 ] as const
 
 // =================================================================
 
-export const userValidation: typeof genericValidation = {
+export const wtfValidation: typeof genericValidation = {
   // ------------------------------
 
   ...genericValidation,
@@ -49,7 +48,6 @@ export const userValidation: typeof genericValidation = {
 
   createOneValidation: z.object({
     id: z.number(),
-    salary: z.number().optional(),
   }),
 
   // ----------------------------------
@@ -58,7 +56,6 @@ export const userValidation: typeof genericValidation = {
     id: z.number(), 
     data: z.object({
       id: z.number(),
-      salary: z.number().optional(),
     }).partial(),
   }),
 }

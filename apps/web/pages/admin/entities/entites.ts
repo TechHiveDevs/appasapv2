@@ -1,6 +1,6 @@
-import { User } from "./user/ui.user"
+import { Wtf } from "./wtf/ui.wtf"
 
 export const entities = [
-    User,
+    Wtf,
 ]
   
